@@ -5,42 +5,28 @@
 
 - url: https://github.com/chap-models/configurable_baseline_model
   versions:
-    v1: "@dc0d64927f9e1dc2c86cff5915c9bd0b08151e23"
+    v1: "@dc0d64927f9e1dc2c86cff5915c9bd0b08151e23"  # point forecast + Gaussian log noise
+    v2: "@ea9ed02143b3f5045ff6ca9afee4d5793a76da3c"  # seasonal shift persistence samples, spread factor
   configurations:
-    # The three methods, unbiased, with moderate noise.
-    seasonal_shift:
-      user_option_values:
-        method: seasonal_shift
-        log_noise_sd: 0.3
-    persistence:
-      user_option_values:
-        method: persistence
-        log_noise_sd: 0.3
+    # Identical to CHAP's built-in seasonal_shift_persistence.
     baseline:
       user_option_values:
-        method: baseline
-        log_noise_sd: 0.3
-    # Biased versions of seasonal_shift: about 35% too high and too low.
-    seasonal_shift_over:
+        spread_factor: 1.0
+        log_bias: 0.0
+    # About 35% too high and 26% too low.
+    biased_over:
       user_option_values:
-        method: seasonal_shift
         log_bias: 0.3
-        log_noise_sd: 0.3
-    seasonal_shift_under:
+    biased_under:
       user_option_values:
-        method: seasonal_shift
         log_bias: -0.3
-        log_noise_sd: 0.3
-    # Spread variants of seasonal_shift: point forecast, too narrow and too wide.
-    seasonal_shift_point:
+    # Point forecast at the median, half and double the log-space spread.
+    point:
       user_option_values:
-        method: seasonal_shift
-        log_noise_sd: 0.0
-    seasonal_shift_narrow:
+        spread_factor: 0.0
+    narrow:
       user_option_values:
-        method: seasonal_shift
-        log_noise_sd: 0.1
-    seasonal_shift_wide:
+        spread_factor: 0.5
+    wide:
       user_option_values:
-        method: seasonal_shift
-        log_noise_sd: 1.0
+        spread_factor: 2.0
