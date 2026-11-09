@@ -1,0 +1,46 @@
+# Seeding entry for CHAP. Copy this file into chap-core's config/configured_models/
+# (e.g. as configurable_baseline_model.yaml) to seed the model and its configurations.
+# The version is a model-code commit; a file cannot reference its own commit, so the
+# sha below always points at an earlier commit. Add a new label when the model code changes.
+
+- url: https://github.com/chap-models/configurable_baseline_model
+  versions:
+    v1: "@dc0d64927f9e1dc2c86cff5915c9bd0b08151e23"
+  configurations:
+    # The three methods, unbiased, with moderate noise.
+    seasonal_shift:
+      user_option_values:
+        method: seasonal_shift
+        log_noise_sd: 0.3
+    persistence:
+      user_option_values:
+        method: persistence
+        log_noise_sd: 0.3
+    baseline:
+      user_option_values:
+        method: baseline
+        log_noise_sd: 0.3
+    # Biased versions of seasonal_shift: about 35% too high and too low.
+    seasonal_shift_over:
+      user_option_values:
+        method: seasonal_shift
+        log_bias: 0.3
+        log_noise_sd: 0.3
+    seasonal_shift_under:
+      user_option_values:
+        method: seasonal_shift
+        log_bias: -0.3
+        log_noise_sd: 0.3
+    # Spread variants of seasonal_shift: point forecast, too narrow and too wide.
+    seasonal_shift_point:
+      user_option_values:
+        method: seasonal_shift
+        log_noise_sd: 0.0
+    seasonal_shift_narrow:
+      user_option_values:
+        method: seasonal_shift
+        log_noise_sd: 0.1
+    seasonal_shift_wide:
+      user_option_values:
+        method: seasonal_shift
+        log_noise_sd: 1.0

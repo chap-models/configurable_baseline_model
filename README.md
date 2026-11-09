@@ -57,3 +57,9 @@ user_option_values:
 YAML
 chap eval . data.csv eval.nc --model-configuration-yaml config.yaml
 ```
+
+## Seeding into CHAP
+
+`chap_seed.yaml` seeds the model with eight configurations: the three methods
+with `log_noise_sd: 0.3`, and `seasonal_shift` with a bias of +0.3 and -0.3 and
+with noise of 0, 0.1 and 1.0. Copy it into chap-core's `config/configured_models/`.
