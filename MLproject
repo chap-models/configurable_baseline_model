@@ -36,3 +36,8 @@ entry_points:
       out_file: path
       model_config: str
     command: "python predict.py {model} {historic_data} {future_data} {out_file} {model_config}"
+
+meta_data:
+  display_name: "Seasonal shift persistence (configurable spread and bias)"
+  description: "CHAP's seasonal shift persistence baseline, with the spread of the samples around the median scaled and a bias added in log(1 + cases) space. With the default options it gives the same samples as the built-in model."
+  author: "Knut Rand"
