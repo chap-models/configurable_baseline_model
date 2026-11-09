@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+output/*
+!output/.gitkeep
+model_configuration_for_run.yaml
+runs/

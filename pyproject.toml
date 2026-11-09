@@ -1,0 +1,12 @@
+[project]
+name = "configurable_baseline_model"
+version = "0.1.0"
+description = "CHAP baseline model (seasonal shift, persistence, seasonal mean) with configurable log-space bias and noise"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "joblib",
+    "pydantic>=2",
+    "pyyaml",
+]
