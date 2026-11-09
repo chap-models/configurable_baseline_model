@@ -1,4 +1,4 @@
-"""Predict: point forecast by the chosen method, then log-space bias and noise."""
+"""Predict: seasonal shift persistence samples, rescaled around the median and shifted in log space."""
 
 from __future__ import annotations
 
@@ -9,11 +9,19 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from config import load_config
-from model import point_forecasts, sample
+from config import ModelConfig, load_config
+from seasonal_shift_persistence import N_SAMPLES
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s | %(message)s")
 logger = logging.getLogger("configurable_baseline_model")
+
+
+def adjust(samples: np.ndarray, config: ModelConfig) -> np.ndarray:
+    """Scale each row's distance from its median by `spread_factor` and add `log_bias`, in log(1 + cases) space."""
+    log_samples = np.log1p(samples)
+    median = np.median(log_samples, axis=1, keepdims=True)
+    adjusted = median + config.spread_factor * (log_samples - median) + config.log_bias
+    return np.maximum(np.expm1(adjusted), 0.0)
 
 
 def predict(
@@ -25,19 +33,17 @@ def predict(
 ) -> None:
     config = load_config(config_path)
     logger.info("User options: %s", config.model_dump())
-    profiles = joblib.load(model_path)
+    model = joblib.load(model_path)
     historic = pd.read_csv(historic_data_path)
     future = pd.read_csv(future_data_path)
-    rng = np.random.default_rng(config.seed)
 
     outputs = []
     for location, future_group in future.groupby("location"):
         future_group = future_group.sort_values("time_period")
         historic_group = historic[historic["location"] == location].sort_values("time_period")
-        log_point = point_forecasts(config.method, profiles, location, historic_group, future_group)
-        samples = sample(log_point, config, rng)
+        samples = adjust(model.predict_location(location, historic_group, future_group), config)
         out = future_group[["time_period", "location"]].reset_index(drop=True)
-        sample_columns = pd.DataFrame(samples, columns=[f"sample_{i}" for i in range(config.n_samples)])
+        sample_columns = pd.DataFrame(samples, columns=[f"sample_{i}" for i in range(N_SAMPLES)])
         outputs.append(pd.concat([out, sample_columns], axis=1))
 
     pd.concat(outputs).to_csv(out_file_path, index=False)

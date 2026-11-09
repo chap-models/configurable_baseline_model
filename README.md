@@ -1,38 +1,33 @@
 # configurable_baseline_model
 
-A CHAP model template with three simple forecasting methods and a configurable,
-known bias and noise in log space. Use it as a reference baseline, or to check
-how evaluation metrics react to a forecast that is too high, too low, or too
-narrow or wide by a known amount.
+CHAP's seasonal shift persistence baseline, with a configurable spread and bias in
+log space. With the default options the samples are identical to CHAP's built-in
+`seasonal_shift_persistence` model. Use the options to check how evaluation metrics
+react to a forecast that is too high, too low, too narrow or too wide by a known amount.
 
 ## Method
 
-All computation is in `log(1 + cases)` space. Training stores, per location, the
-mean of `log(1 + cases)` for each period of year (month 1-12 or week 1-52, with
-week 53 counted as 52). A missing period of year falls back to the mean across
-locations, then to the overall mean.
+`seasonal_shift_persistence.py` is a copy of the built-in model from chap-core
+(`chap_core/models/builtin/seasonal_shift_persistence.py` and `empirical.py`),
+without a chap-core dependency. For a target `h` periods after the last observed
+value `y`, its 100 samples are quantiles of `(y + 1) * r - 1`, where `r` are the
+ratios `(y_t + 1) / (y_{t-h} + 1)` in the training data for the same location and
+the target's month or week of year.
 
-For each future period the point forecast `m` is:
+Each forecast's samples `s` are then adjusted in `log(1 + cases)` space:
 
-| `method`         | point forecast `m`                                               |
-|------------------|------------------------------------------------------------------|
-| `persistence`    | `log(1 + y_last)`, the last observed value                       |
-| `baseline`       | the location's mean for the target's period of year             |
-| `seasonal_shift` | `log(1 + y_last)` + mean(target period) - mean(last observed period) |
-
-Samples are `max(exp(m + log_bias + e) - 1, 0)` with `e ~ N(0, log_noise_sd)`.
+```
+z = log(1 + s)
+z' = median(z) + spread_factor * (z - median(z)) + log_bias
+samples = max(exp(z') - 1, 0)
+```
 
 ## Options
 
-| option         | default          | meaning                                                   |
-|----------------|------------------|-----------------------------------------------------------|
-| `method`       | `seasonal_shift` | `seasonal_shift`, `persistence` or `baseline`             |
-| `log_bias`     | `0.0`            | added in log space; `0.1` scales forecasts by about 1.1   |
-| `log_noise_sd` | `0.0`            | sd of the Gaussian noise per sample in log space           |
-| `n_samples`    | `100`            | samples per forecast                                      |
-| `seed`         | `0`              | seed for the noise                                        |
-
-With `log_noise_sd: 0` every sample is the same, which gives a point forecast.
+| option          | default | meaning                                                                  |
+|-----------------|---------|--------------------------------------------------------------------------|
+| `spread_factor` | `1.0`   | 1 keeps the samples, 0 gives a point forecast at the median, 2 doubles the log-space spread |
+| `log_bias`      | `0.0`   | added in log space; `0.1` scales forecasts by about 1.1                  |
 
 The options are defined in `config.py` (`ModelConfig`). After changing them,
 regenerate the `user_options` block in `MLproject` with
@@ -51,15 +46,14 @@ With CHAP:
 ```
 cat > config.yaml <<YAML
 user_option_values:
-  method: persistence
-  log_bias: 0.2
-  log_noise_sd: 0.5
+  spread_factor: 2.0
+  log_bias: 0.3
 YAML
 chap eval . data.csv eval.nc --model-configuration-yaml config.yaml
 ```
 
 ## Seeding into CHAP
 
-`chap_seed.yaml` seeds the model with eight configurations: the three methods
-with `log_noise_sd: 0.3`, and `seasonal_shift` with a bias of +0.3 and -0.3 and
-with noise of 0, 0.1 and 1.0. Copy it into chap-core's `config/configured_models/`.
+`chap_seed.yaml` seeds the model with six configurations: the unchanged baseline,
+a bias of +0.3 and -0.3, and spread factors 0, 0.5 and 2. Copy it into chap-core's
+`config/configured_models/`.

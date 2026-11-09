@@ -1,4 +1,4 @@
-"""Train: store the seasonal profiles in log(1 + cases) space."""
+"""Train: collect the seasonal shift ratios of the training data."""
 
 from __future__ import annotations
 
@@ -9,18 +9,17 @@ import joblib
 import pandas as pd
 
 from config import load_config
-from model import seasonal_profiles
+from seasonal_shift_persistence import SeasonalShiftPersistence
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s | %(message)s")
 logger = logging.getLogger("configurable_baseline_model")
 
 
 def train(train_data_path: str, model_path: str, config_path: str | None = None) -> None:
-    config = load_config(config_path)
-    logger.info("User options: %s", config.model_dump())
-    df = pd.read_csv(train_data_path).sort_values(["location", "time_period"])
-    joblib.dump(seasonal_profiles(df), model_path)
-    logger.info("Saved seasonal profiles for %d locations to %s", df["location"].nunique(), model_path)
+    logger.info("User options: %s", load_config(config_path).model_dump())
+    df = pd.read_csv(train_data_path)
+    joblib.dump(SeasonalShiftPersistence.train(df), model_path)
+    logger.info("Saved seasonal shifts for %d locations to %s", df["location"].nunique(), model_path)
 
 
 if __name__ == "__main__":
